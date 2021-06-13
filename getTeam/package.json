@@ -1,0 +1,33 @@
+{
+  "name": "getTeam",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "android": "react-native run-android",
+    "ios": "react-native run-ios",
+    "start": "react-native start",
+    "test": "jest",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@react-native-community/checkbox": "^0.5.8",
+    "react": "17.0.1",
+    "react-native": "0.64.2",
+    "react-native-dropdown-picker": "^5.1.21",
+    "react-native-elements": "^3.4.2",
+    "react-native-snap-carousel": "^3.9.1"
+  },
+  "devDependencies": {
+    "@babel/core": "7.14.5",
+    "@babel/runtime": "7.14.5",
+    "@react-native-community/eslint-config": "2.0.0",
+    "babel-jest": "26.6.3",
+    "eslint": "7.14.0",
+    "jest": "26.6.3",
+    "metro-react-native-babel-preset": "0.64.0",
+    "react-test-renderer": "17.0.1"
+  },
+  "jest": {
+    "preset": "react-native"
+  }
+}

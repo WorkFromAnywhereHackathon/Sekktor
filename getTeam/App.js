@@ -31,7 +31,21 @@ import CarouselCards from './CarouselCards'
 
 class App extends Component {
 
+// thisUserCanSeeChannels <-- говорит что юзеру можно показывать подобранные каналы
+// currentCarouselItemId <-- текущий элеиент карусели
+// openCompetitionForm <-- открывает форму соревнования(хакатона) на которой юзер загружает инфу о своем проекте
+// developerSkills <-- умения текущего юзера которые он выбрал для своего профиля( что ищем )
+// statusChoise <-- выбор кто будет юзер (стартап , девелопер или спонсор)
+// loginEmail < -- емэйл который при логине указал
+// loginPswd <--  пароль который при логине указал
+// userName <-- имя которое вводит при заполнении формы о себе
+//userData
+// userDescription <-- описание которое юзер желает оставить о себе
+// investorInvisibleValue <-- инвестор решил остаться анонимным(инвестор не виден в выборке у стартапов)
+// userInSearch <-- юзер перешёл к поиску (сотрудников, стартапов, девелоперов)
+//
 state={
+thisUserCanSeeChannels:true,
 currentCarouselItemId:'',
 openCompetitionForm:false,
 developerSkills:[],
@@ -187,6 +201,9 @@ get developerThirdScreen(){
         <Text>{this.state.userInfo.userName}</Text>
         <Text>{this.state.userInfo.aboutYou}</Text>
         <View>
+            {this.theTelegramChannelsForThisUser}
+        </View>
+        <View>
             {this.developerSkillsList}
         </View>
         <Button title ='Open competition form' onPress={()=>{this.setState({openCompetitionForm:true})}}/>
@@ -208,6 +225,43 @@ get investorThirdScreen(){
     </View>)
 }
 
+goToTelegramChannel(id){
+    console.log('go link: '+id)
+}
+
+get theTelegramChannelsForThisUser(){
+//на данный моменнт подбирать особо не будем,  просто данные замокаем , но далее конечно же мы будем делать подбор для юзера.
+//при нажатии на элемент пересылает на телегу
+if(this.state.thisUserCanSeeChannels){
+    return (
+    <View>
+        <Text> Telegram Channels that we are recommended for you: </Text>
+         <View style={{height:150}}>
+      <FlatList
+        data={[
+          {title: 'About PHP', id:1},
+          {title: 'About Js',id:2},
+          {title: 'About Python',id:3},
+          {title: 'About DB',id:3},
+        ]}
+        renderItem={({item}) =>
+
+             <TouchableWithoutFeedback onPress={ () => this.pageOfUser(item.id)}>
+
+                  <View>
+                     <Text onClick={()=>{this.goToTelegramChannel(item.id)}}> {item.title} </Text>
+                  </View>
+
+             </TouchableWithoutFeedback>
+
+        }
+      />
+    </View>
+    </View>
+)
+}
+}
+
 get startupThirdScreen(){
 //инфо с картинкой пользователя(у всех она пожалуй будет одна и та же ) и именем мы будем отображать сверху
 // тут будет отображаться слайдер, элементами в котором будут CV девелоперов и инвесторов у которых нет подтверждения во флаге невидимости
@@ -215,6 +269,9 @@ get startupThirdScreen(){
         <Text>{this.state.userInfo.userRole}</Text>
         <Text>{this.state.userInfo.userName}</Text>
         <Text>{this.state.userInfo.aboutYou}</Text>
+         <View>
+            {this.theTelegramChannelsForThisUser}
+        </View>
         <View>
             {this.developerSkillsList}
         </View>
@@ -329,7 +386,10 @@ investorCheckInvisible(){
             </View>
             )
  }
+
+
 get competitionFormScreen(){
+//тут надо добавить возможность описания проекта, его названия, возможно добавления ссылок на файлы проекта(какие пользователи захотят, презентации там , всё такое )
     return (
             <View>
                         <Text> this is competition form screen</Text>
@@ -346,7 +406,7 @@ get competitionFormScreen(){
             <View>
                 <TextInput placeholder="Enter Your name" onChangeText={(text)=>{this.setState({userName:text})}}/>
                 <TextInput maxLength={40} placeholder="Enter about you " onChangeText={(text)=>{this.setState({userDescription:text})}}/>
-                               <View>
+                <View>
                   <Picker
                     selectedValue={this.state.developerSkills}
                     style={{ height: 50, width: 150 }}

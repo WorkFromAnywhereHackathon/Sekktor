@@ -4,7 +4,7 @@ import Carousel from 'react-native-snap-carousel'
 import CarouselCardItem, { SLIDER_WIDTH, ITEM_WIDTH } from './CarouselCardItem'
 import data from './data'
 
-const CarouselCards = () => {
+const CarouselCards = (props) => {
   const isCarousel = React.useRef(null)
 
   return (
@@ -19,6 +19,7 @@ const CarouselCards = () => {
         itemWidth={ITEM_WIDTH}
         inactiveSlideShift={0}
         useScrollView={true}
+        onSnapToItem={(index)=>{props.currentCarouselItem(index)}}
       />
     </View>
   )

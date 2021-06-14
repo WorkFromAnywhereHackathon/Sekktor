@@ -16,7 +16,7 @@ import {
   StyleSheet,
   Text,
   useColorScheme,
-  View, Button, Alert, TextInput, Picker
+  View, Button, Alert, TextInput, Picker,FlatList,TouchableWithoutFeedback
 } from 'react-native';
 
 import {
@@ -32,6 +32,8 @@ import CarouselCards from './CarouselCards'
 class App extends Component {
 
 state={
+currentCarouselItemId:'',
+openCompetitionForm:false,
 developerSkills:[],
     statusChoise:false,
     loginEmail:'',
@@ -41,20 +43,27 @@ developerSkills:[],
     userDescription:'',
     investorInvisibleValue:false,
     userInSearch: false,
+    openUserInfoPage:false,
+    infoForUserInfoPage:{  userId:1, userName:'Test User Name', userRole:'developer', aboutYou:'I am a cool developer', userSkills:['Javascript','Java']},
     userInfo:{newUser:true, userLogged:false, userId:'', userName:'', userRole:'', aboutYou:'', userSkills:{}}
 }
 
 
 
-
+pageOfUser(userId){
+//тут поиск инфы о пользователе по апи. После получения инфы о пользователе записываем инфу в стэйт и открываем страницу показа пользователя
+ this.setState({openUserInfoPage: true})
+    console.log(userId)
+}
     pressButtonHandle(newStatus){
     const userInfoObj = {newUser:true,userLogged:true, userId:'', userName:'', userRole:''}
 
-        this.setState({statusChoise:newStatus, userInfo:userInfoObj, userInSearch:false})
+        this.setState({statusChoise:newStatus, userInfo:userInfoObj, userInSearch:false, openUserInfoPage: false})
     }
 
     pressGoToSearchButton(){
     //тут пока просто смена стэйта что бы показать четвёртый экран, но будет отправляться запрос за данными в зависимости от статуса юзера, и отрисовываться соответствующий экран
+        //userInSearch - обозначает намерение юзера перейти к просмотру четвертого экрана(на котором показаны другие юзеры)
         this.setState({userInSearch:true})
     }
 
@@ -80,6 +89,53 @@ developerSkills:[],
 
     }
 
+ goToUserAccount(){
+    this.setState({openUserInfoPage:false, userInSearch:false})
+ }
+
+get userInfoPage(){
+return (
+        <View>
+                <Text>{this.state.infoForUserInfoPage.userRole}</Text>
+                <Text>{this.state.infoForUserInfoPage.userName}</Text>
+                <Text>{this.state.infoForUserInfoPage.aboutYou}</Text>
+                <View style={{padding:20}}><Button title ='Go to accaunt' onPress={()=>{this.goToUserAccount()}}/></View>
+
+        </View>
+)
+
+}
+
+get listOfStartaps(){
+    return (    <View style={{height:150}}>
+      <FlatList
+        data={[
+          {title: 'Devin', id:1},
+          {title: 'Dan',id:2},
+          {title: 'Dominic',id:3},
+          {title: 'Jackson',id:4},
+          {title: 'James',id:5},
+          {title: 'Joel',id:6},
+          {title: 'John',id:7},
+          {title: 'Jillian',id:8},
+          {title: 'Jimmy',id:9},
+          {title: 'Julie',id:10},
+        ]}
+        renderItem={({item}) =>
+
+             <TouchableWithoutFeedback onPress={ () => this.pageOfUser(item.id)}>
+
+                  <View>
+                     <Text> {item.title} <Button title ='Like It' onPress={()=>{this.setLike(item.id)}}/></Text>
+                  </View>
+
+             </TouchableWithoutFeedback>
+
+        }
+      />
+    </View>)
+}
+
 get thirdScreen(){
 // в зависимости от выбора показывает соответствующий экран, это последний экран, показывается после заполнения профиля
         if (this.state.statusChoise=='developer'){
@@ -93,11 +149,29 @@ get thirdScreen(){
         }
 }
 
+currentCarouselItem=(currentItemId)=>{
+// эта функция служит для того что бы прокидываться в карусель и давать оттуда айдишник
+    this.setState({currentCarouselItemId:currentItemId})
+    console.log('in app: '+currentItemId)
+}
+
+setLike(id){
+if(id==null){
+    console.log(this.state.currentCarouselItemId)
+}else{
+    console.log(id)
+}
+//ставим лайк. записываем что нам кто-то понравился(его айдишник)
+
+}
+
 get carousel(){
       return (
     <SafeAreaView >
-      <CarouselCards />
+      <CarouselCards currentCarouselItem={this.currentCarouselItem}/>
       <Button title ='Go back' onPress={()=>{this.pressButtonHandle(false)}}/>
+      <View style={{padding:20}}><Button title ='Go to accaunt' onPress={()=>{this.goToUserAccount()}}/></View>
+      <View style={{padding:20}}><Button title ='Like It' onPress={()=>{this.setLike()}}/></View>
     </SafeAreaView>
   );
 }
@@ -108,13 +182,14 @@ get developerThirdScreen(){
 // тут на самом деле будет карусель в которой будут отображаться CV компаний
 // go back тут для удобства тестирования
 
-    return (<View>
+    return ( this.state.openCompetitionForm ? this.competitionFormScreen : <View>
         <Text>{this.state.userInfo.userRole}</Text>
         <Text>{this.state.userInfo.userName}</Text>
         <Text>{this.state.userInfo.aboutYou}</Text>
         <View>
             {this.developerSkillsList}
         </View>
+        <Button title ='Open competition form' onPress={()=>{this.setState({openCompetitionForm:true})}}/>
         <Button title ='Go to search' onPress={()=>{this.pressGoToSearchButton()}}/>
         <Button title ='Go back' onPress={()=>{this.pressButtonHandle(false)}}/>
     </View>)
@@ -123,10 +198,11 @@ get developerThirdScreen(){
 get investorThirdScreen(){
 //инфо с картинкой пользователя(у всех она пожалуй будет одна и та же ) и именем мы будем отображать сверху
 // тут будет отображаться просто список который можно будет листать из компаний с кратким описанием и именем
-    return (<View>
+    return (this.state.openCompetitionForm ? this.competitionFormScreen : <View>
         <Text>{this.state.userInfo.userRole}</Text>
         <Text>{this.state.userInfo.userName}</Text>
         <Text>{this.state.userInfo.aboutYou}</Text>
+        <Button title ='Open competition form' onPress={()=>{this.setState({openCompetitionForm:true})}}/>
         <Button title ='Go to search' onPress={()=>{this.pressGoToSearchButton()}}/>
         <Button title ='Go back' onPress={()=>{this.pressButtonHandle(false)}}/>
     </View>)
@@ -135,10 +211,14 @@ get investorThirdScreen(){
 get startupThirdScreen(){
 //инфо с картинкой пользователя(у всех она пожалуй будет одна и та же ) и именем мы будем отображать сверху
 // тут будет отображаться слайдер, элементами в котором будут CV девелоперов и инвесторов у которых нет подтверждения во флаге невидимости
-        return (<View>
+        return (this.state.openCompetitionForm ? this.competitionFormScreen : <View>
         <Text>{this.state.userInfo.userRole}</Text>
         <Text>{this.state.userInfo.userName}</Text>
         <Text>{this.state.userInfo.aboutYou}</Text>
+        <View>
+            {this.developerSkillsList}
+        </View>
+        <Button title ='Open competition form' onPress={()=>{this.setState({openCompetitionForm:true})}}/>
         <Button title ='Go to search' onPress={()=>{this.pressGoToSearchButton()}}/>
         <Button title ='Go back' onPress={()=>{this.pressButtonHandle(false)}}/>
     </View>)
@@ -197,7 +277,8 @@ let result = []
  get developerScreen(){
 //это страница профиля девелопера
     return (
-            <View>
+
+                            <View>
                 <Text>Developer</Text>
                 <TextInput placeholder="Enter Your name" onChangeText={(text)=>{this.setState({userName:text})}}/>
                 <TextInput maxLength={40} placeholder="Enter about you " onChangeText={(text)=>{this.setState({userDescription:text})}}/>
@@ -217,6 +298,8 @@ let result = []
                 <Button title ='Save info' onPress={()=>{this.pressButtonSaveInfo()}}/>
                 <Button title ='Go back' onPress={()=>{this.pressButtonHandle(false)}}/>
             </View>
+
+
             )
  }
 
@@ -246,6 +329,16 @@ investorCheckInvisible(){
             </View>
             )
  }
+get competitionFormScreen(){
+    return (
+            <View>
+                        <Text> this is competition form screen</Text>
+
+
+                <Button title ='Go back' onPress={()=>{this.setState({openCompetitionForm:false})}}/>
+                </View>
+    )
+}
 
  get startupScreen(){
  // экран хаполнения профиля стартап проекта
@@ -253,6 +346,17 @@ investorCheckInvisible(){
             <View>
                 <TextInput placeholder="Enter Your name" onChangeText={(text)=>{this.setState({userName:text})}}/>
                 <TextInput maxLength={40} placeholder="Enter about you " onChangeText={(text)=>{this.setState({userDescription:text})}}/>
+                               <View>
+                  <Picker
+                    selectedValue={this.state.developerSkills}
+                    style={{ height: 50, width: 150 }}
+                    onValueChange={(itemValue, itemIndex) => this.setSelectedValuePickerDeveloper(itemValue,itemIndex)}
+                  >
+                    <Picker.Item label="Java" value="java" />
+                    <Picker.Item label="JavaScript" value="js" />
+                  </Picker>
+                </View>
+                {this.developerSkillsChoise}
                    <Button title ='Save info' onPress={()=>{this.pressButtonSaveInfo()}}/>
                 <Button title ='Go back' onPress={()=>{this.pressButtonHandle(false)}}/>
             </View>
@@ -294,6 +398,7 @@ get developerFourthScreen(){
     <View>
         <View><Text>Developer</Text></View>
         {this.carousel}
+        <View style={{padding:20}}><Button title ='Go to accaunt' onPress={()=>{this.goToUserAccount()}}/></View>
         <Button title ='Go back' onPress={()=>{this.pressButtonHandle(false)}}/>
     </View>);
 }
@@ -301,18 +406,46 @@ get developerFourthScreen(){
 get investorFourthScreen(){
     return (
     <View>
-        <Text>Investor</Text>
-        <Button title ='Go back' onPress={()=>{this.pressButtonHandle(false)}}/>
-    </View>)
+        <View>
+            {this.listOfStartaps}
+        </View>
+        <View>
+            <Text>Investor</Text>
+
+            <View style={{padding:20}}><Button title ='Go to accaunt' onPress={()=>{this.goToUserAccount()}}/></View>
+            <Button title ='Go back' onPress={()=>{this.pressButtonHandle(false)}}/>
+        </View>
+    </View>
+    )
 }
 
 get startupFourthScreen(){
     return (
     <View>
         <View><Text>Startup</Text></View>
-        {this.carousel}
-        <Button title ='Go back' onPress={()=>{this.pressButtonHandle(false)}}/>
+        <View>{this.carousel}</View>
+
+
     </View>)
+}
+
+get whatScreenMustBeSeen(){
+if(!this.state.userInfo.userLogged && this.state.userInfo.newUser && !this.state.statusChoise && !this.state.userInSearch && !this.state.openUserInfoPage){
+    return this.loginScreen
+}
+if(this.state.userInfo.newUser && !this.state.statusChoise && !this.state.userInSearch && !this.state.openUserInfoPage){
+    return this.firstScreen
+}
+if(this.state.statusChoise && !this.state.userInSearch && !this.state.openUserInfoPage && !this.state.userInfo.newUser ){
+    return this.secondScreen
+}
+if(this.state.userInSearch && !this.state.openUserInfoPage){
+   return this.fourthScreen
+}
+if(this.state.openUserInfoPage){
+ return this.userInfoPage
+}
+    //{this.state.userInfo.userLogged ? !this.state.userInfo.newUser? this.state.userInSearch ? this.fourthScreen : this.thirdScreen:(this.state.statusChoise==false ? this.firstScreen : this.secondScreen): this.loginScreen}
 }
 
 get firstScreen(){
@@ -329,7 +462,7 @@ get firstScreen(){
     render(){
         return (
                 <View style={{flex:1,alignItems: 'center', justifyContent: 'center'}}>
-                    {this.state.userInfo.userLogged ? !this.state.userInfo.newUser? this.state.userInSearch ? this.fourthScreen : this.thirdScreen:(this.state.statusChoise==false ? this.firstScreen : this.secondScreen): this.loginScreen}
+                    {this.state.userInfo.userLogged ? !this.state.userInfo.newUser? this.state.userInSearch ? this.state.openUserInfoPage ? this.userInfoPage : this.fourthScreen : this.thirdScreen:(this.state.statusChoise==false ? this.firstScreen : this.secondScreen): this.loginScreen}
                 </View>
                 );
     }

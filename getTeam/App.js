@@ -44,6 +44,7 @@ class App extends Component {
 // userInSearch <-- юзер перешёл к поиску (сотрудников, стартапов, девелоперов)
 //
 state={
+forWhoThisLetterName:'',
 carouselData:[],
 userId:'',
 listUsersToWhoCanWriteMessage:[],
@@ -53,7 +54,7 @@ listMessages:[],
     thisUserCanSeeChannels:true,
     currentCarouselItemId:'',
     openCompetitionForm:false,
-    developerSkills:[],
+    developerSkills:'',
    statusChoise:false,
     notificationItems:[],
     professionalSize:'',
@@ -76,7 +77,6 @@ listMessages:[],
     thisUserCanSeeChannels:true,
     currentCarouselItemId:'',
     openCompetitionForm:false,
-    developerSkills:[],
     newUser:true,
 
     statusChoise:"developer",
@@ -105,16 +105,11 @@ listMessages:[],
     }
 
     pressGoToSearchButton(){
-    //тут пока просто смена стэйта что бы показать четвёртый экран, но будет отправляться запрос за данными в зависимости от статуса юзера, и отрисовываться соответствующий экран
-        //userInSearch - обозначает намерение юзера перейти к просмотру четвертого экрана(на котором показаны другие юзеры)
-        //тут обращение к api за данными
         this.setMatchingData()
         this.setState({userInSearch:true, carouselData: data})
     }
 
     pressButtonSaveInfo(){
-        //тут сохраняем инфу о пользователе.  В этом методе так же разбираемся какие данные отправлять , и деаем запрос на отправку данных на бэк
-        //тут ещё надо учитывать, если юзер новый , то юзер айди будет пустой, если нет, то там будет значение, мы выясним когда на бэк отправим запрос после логина
         this.handleUpdateUser()
         const userInfoObj = {
                                 newUser:false,userLogged:true, userId:'',
@@ -122,13 +117,10 @@ listMessages:[],
                                 aboutYou: this.state.userDescription
                             }
         this.setState({userInfo: userInfoObj,userLogged:true, newUser:false})
-        //this.setState({userData:userData})
+
     }
 
     handleLoginSubmit(){
-    //тут отправка запроса на бэк что бы залогинить
-    //(тут упрощение , если юзера нет, то мы его регистрируем и позволяем идти дальше, если он есть то берем его данные )
-    //также пока что для простоты считаем что все юзеры новые , когда добавлю бэк и допишу эту функцию , то там уже будет разделение
         if(this.state.loginEmail && this.state.loginPswd){
             const userInfoObj = {newUser:true,userLogged:true, userId:'', userName:'', userRole:''}
             this.setState({userInfo: userInfoObj,userLogged:true,newUser:true, userLogged:true})
@@ -153,7 +145,6 @@ listMessages:[],
 
 
     currentCarouselItem=(currentItemId)=>{
-    // эта функция служит для того что бы прокидываться в карусель и давать оттуда айдишник
         this.setState({currentCarouselItemId:currentItemId.id})
     }
 
@@ -163,21 +154,22 @@ listMessages:[],
 
     get carousel(){
           return (
-        <SafeAreaView >
-          <CarouselCards carouselData={this.state.carouselData} currentCarouselItem={this.currentCarouselItem}/>
-          <Button title ='Go back' onPress={()=>{this.pressButtonHandle(false)}}/>
-          <View style={{padding:20}}><Button title ='Go to accaunt' onPress={()=>{this.goToUserAccount()}}/></View>
-          <View style={{padding:20}}><Button title ='Like It' onPress={()=>{this.setLike()}}/></View>
-        </SafeAreaView>
-      );
+
+                <SafeAreaView >
+                  <CarouselCards carouselData={this.state.carouselData} currentCarouselItem={this.currentCarouselItem}/>
+                  <View style={{marginTop:20,}} ><Button  color='grey' title ='Go back' onPress={()=>{this.pressButtonHandle(false)}}/></View>
+                  <View style={{marginTop:20}}><Button color='grey' title ='Go to accaunt' onPress={()=>{this.goToUserAccount()}}/></View>
+                  <View style={{marginTop:20}}><Button color='grey' title ='Like It' onPress={()=>{this.setLike()}}/></View>
+                </SafeAreaView>
+
+          );
     }
 
     get notifications(){
     let result = []
     let i = 0
          for(const item in this.state.notificationItems){
-            result.push(<Text key={i}>User {this.state.notificationItems[item].username_who_like} is interested in your project
-             {this.state.notificationItems[item].idea_name} </Text>)
+            result.push(<Text style={{fontSize:14 , borderColor:'grey', borderWidth:2, marginBottom:15}} key={i}>User {this.state.notificationItems[item].username_who_like} is interested in your project {this.state.notificationItems[item].idea_name} </Text> )
              i++
          }
         return result
@@ -185,14 +177,17 @@ listMessages:[],
 
     get notificationsListForm(){
         return(
-            <View style={{backgroundColor:'white'}}>
-
-                        {this.notifications}
-
-                <Button title ='Go back to account' onPress={()=>{this.setState({openUserInfoPage:false, userInSearch:false,
-                    openNotificationsList:false})}}/>
+            <View style={{backgroundColor:'white', height:500, width: 400, alignItems:'center', borderRadius: 25}}>
+                <View style={{height: 350, marginTop:40}}>
+                    {this.notifications}
+                </View>
+                <View style={{ width: 250 }}><Button color='grey' title ='Go back to account' onPress={()=>{this.backToAckFromNotify()}}/></View>
             </View>
         )
+    }
+
+    backToAckFromNotify(){
+        this.setState({openUserInfoPage:false, userInSearch:false,openNotificationsList:false})
     }
 
     getTargetUsersForMessages(){
@@ -201,15 +196,15 @@ listMessages:[],
     }
 
     get userSelectForSendMessage(){
-
         return(
                  <View style={{backgroundColor:'white',height:150}}>
+                 <View style = {{marginBottom: 10, marginTop:40}}><Text> Current choosen user: {this.state.forWhoThisLetterName}</Text></View>
                       <FlatList
                         data={this.state.listUsersToWhoCanWriteMessage}
                         renderItem={({item}) =>
                         <TouchableWithoutFeedback  onPress={ () => this.pageOfUser(item.user_id_who_like)}>
-                              <View >
-                                 <Text key={item.user_id_who_like} > {item.username_who_like} <Button title ='Select this user' onPress={()=>{this.setState({forWhoThisLetter:item.user_id_who_like})}}/></Text>
+                              <View style={{marginBottom:10}}>
+                                 <Button style={{height:10, width:10}} color = 'green' title = {item.username_who_like}  onPress={()=>{this.setState({forWhoThisLetter:item.user_id_who_like, forWhoThisLetterName:item.username_who_like })}}/>
                               </View>
                         </TouchableWithoutFeedback>
                         }
@@ -222,76 +217,96 @@ listMessages:[],
         let result = []
         let i = 0
          for(const item in this.state.listMessages){
-            result.push(<Text key={i}>User {this.state.listMessages[item].username_who_send_message} says you:  {this.state.listMessages[item].text_message} </Text>)
+            result.push(<Text style={{fontSize:14 , borderColor:'grey', borderWidth:2, marginBottom:15}} key={i}> <Text style={{color: 'black'}}>User {this.state.listMessages[item].username_who_send_message} says you:</Text>  {this.state.listMessages[item].text_message} </Text>)
              i++
          }
         return result
     }
-    
+
     get messagesListForm(){
         return(
             !this.state.createLetter ?
-            <View style={{backgroundColor:'white'}}>
-                {this.messageLIstForm}
-
-                <Button title ='Wanna create message? ' onPress={()=>{this.getTargetUsersForMessages()}}/>
-                <Button title ='Go back to account' onPress={()=>{this.setState({openUserInfoPage:false, userInSearch:false, openNotificationsList:false, createLetter:false, openMessagesForm:false})}}/>
+            <View style={{ width: 400, height: 500, borderRadius:25, backgroundColor:'white', flex:1, alignItems:'center'}}>
+                <View style={{height: 300, marginTop:30}}>{this.messageLIstForm}</View>
+                <View style={{width: 250}}><Button style={{width: 250}} color = 'grey' title ='Create message' onPress={()=>{this.getTargetUsersForMessages()}}/></View>
+                <View style={{width: 250}}><Button style={{width: 250}} color = 'grey' title ='Back to account' onPress={()=>{this.setState({openUserInfoPage:false, userInSearch:false,
+                openNotificationsList:false, createLetter:false, openMessagesForm:false})}}/></View>
             </View> :
-            <View style={{backgroundColor:'white'}}>
-                <Text> Create message here </Text>
-                <TextInput placeholder="Enter text message here" onChangeText={(text)=>{this.setState({textLetter:text})}}/>
+            <View style={{  width: 400, height: 500, borderRadius:25, backgroundColor:'white', flex:1, alignItems:'center'}}>
+                <View style={{marginTop:40}}><Text style={{ fontSize:16 }}> Create message here </Text></View>
+                <TextInput style={{width: 250, borderColor:'grey', borderRadius:10, borderWidth:1}} placeholder="Enter text message here" onChangeText={(text)=>{this.setState({textLetter:text})}}/>
                    {this.userSelectForSendMessage}
+                 <View style = {{width:250, marginBottom: 20}}><Button color = 'grey' title ='Send Message' onPress={()=>{this.sendMessage()}}/></View>
 
-                <Button title ='Send Message' onPress={()=>{this.sendMessage()}}/>
-                <Button title ='Go back to message list' onPress={()=>{this.setState({openUserInfoPage:false, userInSearch:false, openNotificationsList:false, createLetter:false})}}/>
-                <Button title ='Go back to account' onPress={()=>{this.setState({openUserInfoPage:false, userInSearch:false, openNotificationsList:false, createLetter:false, openMessagesForm:false})}}/>
+                 <View style = {{width:250, marginBottom: 20}}><Button color = 'grey' title ='Message list' onPress={()=>{this.messageList()}}/></View>
+                  <View style = {{width:250, marginBottom: 20}}><Button color = 'grey' title ='Back to account' onPress={()=>{this.backToAck()}}/></View>
+
             </View>
 
         )
     }
+    backToAck(){
+        this.setState({openUserInfoPage:false, userInSearch:false, openNotificationsList:false, createLetter:false, openMessagesForm:false})
+    }
+
+    messageList(){
+        this.setState({openUserInfoPage:false, userInSearch:false, openNotificationsList:false, createLetter:false})
+    }
+
 get userName(){
     return (
-        this.state.userName ? <Text>Username: {this.state.userName}</Text>:null
+        this.state.userName ? <Text style={{fontSize: 16, paddingBottom: 15}}>Username: {this.state.userName}</Text>:null
     )
 }
 get firstName(){
-    return (this.state.firstName ? <Text >First name: {this.state.firstName}</Text>:null)
+    return (this.state.firstName ? <Text style={{fontSize: 16, paddingBottom: 15}}>First name: {this.state.firstName}</Text>:null)
 }
 get lastName(){
-    return (this.state.lastName ? <Text>Last Name:{ this.state.lastName}</Text>:null)
+    return (this.state.lastName ? <Text style={{fontSize: 16, paddingBottom: 15}}>Last Name:{ this.state.lastName}</Text>:null)
 }
 get aboutUser(){
-    return ( this.state.aboutUser ? <Text>About user: {this.state.aboutUser}</Text>:null)
+    return ( this.state.aboutUser ? <Text style={{fontSize: 16, paddingBottom: 15}} >About user: {this.state.aboutUser}</Text>:null)
 }
 get chosenSkillsList(){
-    return (this.state.developerSkills.length>0 ? <View>
-                         <Text>Chosen skills list: </Text>
-                        {this.developerSkillsList}
+    return (this.state.developerSkills.length>0 ?
+                    <View>
+                         <Text style={{fontSize: 20}}>Chosen skills list: </Text>
+                        {this.state.developerSkills}
                     </View>:null)
 }
-
+get skillOfUser(){
+    return (this.state.developerSkills ? <Text style={{fontSize: 16, paddingBottom: 15}} >User skill: {this.state.developerSkills}</Text>:null)
+}
     get thirdScreen(){
-    //инфо с картинкой пользователя(у всех она пожалуй будет одна и та же ) и именем мы будем отображать сверху
-    // тут будет отображаться слайдер, элементами в котором будут CV девелоперов и инвесторов у которых нет подтверждения во флаге невидимости
             return (
                 this.state.openCompetitionForm ? this.competitionFormScreen :
                 this.state.openNotificationsList ? this.notificationsListForm :
                 this.state.openMessagesForm ? this.messagesListForm:
-                <View style={{top:0, marginTop:0, backgroundColor:'white'}}>
+                <View style={{borderRadius: 25,top:0, marginTop:0, backgroundColor:'white', width:400, height:500, alignItems:'center'}}>
                     {this.userName}
                     {this.firstName}
                     {this.lastName}
                     <View>
                        { this.aboutUser}
                     </View>
+                    {this.skillOfUser}
 
-                    {this.chosenSkillsList}
-                    <View style={{paddingTop: 50}}>
-                        <Button title ='Create idea' onPress={()=>{this.setState({openCompetitionForm:true})}}/>
-                        <Button title ='Go to search' onPress={()=>{this.pressGoToSearchButton()}}/>
-                        <Button title ='Update Profile' onPress={()=>{this.pressButtonHandle(false)}}/>
-                        <Button title ='Your Notifications (2)' onPress={()=>{this.openNotifications()}}/>
-                        <Button title ='Your messages list (1)' onPress={()=>{this.openMessages()}}/>
+                    <View style={{paddingTop: 20 , backgroundColor:'white'}}>
+                    <View style = {{marginTop: 20, marginBottom: 20,width:250}}>
+                        <Button color='grey'  title ='Create idea' onPress={()=>{this.setState({openCompetitionForm:true})}}/>
+                    </View>
+                    <View style = {{marginBottom: 20,width:250}}>
+                        <Button color='grey'  title ='Search projects' onPress={()=>{this.pressGoToSearchButton()}}/>
+                    </View>
+                    <View style = {{marginBottom: 20,width:250}}>
+                        <Button color='grey'  title ='Update Profile' onPress={()=>{this.pressButtonHandle(false)}}/>
+                    </View>
+                    <View style = {{marginBottom: 20,width:250}}>
+                        <Button color='grey'  title ='Notifications' onPress={()=>{this.openNotifications()}}/>
+                    </View>
+                    <View style = {{ width:250}}>
+                        <Button color='grey'  title ='Messages' onPress={()=>{this.openMessages()}}/>
+                    </View>
                     </View>
                 </View>)
     }
@@ -306,10 +321,7 @@ get chosenSkillsList(){
         this.setState({openMessagesForm:true})
     }
 
-
-
     setSelectedValuePickerDeveloper(itemValue,itemIndex){
-    //эта функция добавляет выбранный скилл в массив умений девелопера
         let chose = this.state.developerSkills
         chose.push(itemValue)
         this.setState({developerSkills: chose})
@@ -321,23 +333,20 @@ get chosenSkillsList(){
     }
 
     handleDeleteSkill(choseName){
-    //Эта функция удаляет скил из массива выбранных скилов
         let chooses = this.state.developerSkills
         chooses.splice(chooses.indexOf(choseName), 1);
         this.setState({developerSkills:chooses})
     }
 
     get developerSkillsList(){
-    // отрисовывает скилы девелопера
         let result = []
         for(const chose in this.state.developerSkills){
             result.push( <Text key={chose}> {this.state.developerSkills[chose]} </Text>)
         }
-        return result
+        return this.state.developerSkills
     }
 
     get developerSkillsChoise(){
-        //отрисовывает скилы девелопера с возможностью их удаления
         let result = []
             for(const chose in this.state.developerSkills){
                 let currentSkillName = this.state.developerSkills[chose]
@@ -374,52 +383,35 @@ get chosenSkillsList(){
     }
 
     get profileMenu(){
-
-    //это страница профиля девелопера
         return (
-                <View style={{ backgroundColor:'white', top:0 , left:0}}>
-                    <Text >{this.state.userId} {this.state.statusChoise=='specialist'? 'Specialist':'Team'}</Text>
-                    <View>
-                          <Text>You are a: </Text>
-                          <Picker
-                            selectedValue={this.state.professionalSize}
-                            style={{ height: 50, width: 150 }}
-                            onValueChange={(itemValue, itemIndex) => this.setProfessionalSize(itemValue,itemIndex)}
-                          >
-                            <Picker.Item label="Individual" value="Individual" />
-                            <Picker.Item label="Collective" value="Collective" />
-                            <Picker.Item label="Organisation" value="Organisation" />
-                          </Picker>
+                    <View style={{ borderRadius: 25, width:400, height:400, backgroundColor:'white', alignItems:'center'}}>
+                        <View>
+                            <Text style={{ fontSize: 18 }}>You are a: </Text>
+                            <View style={{flexDirection: "row"}}>
+                                <View style={{paddingLeft:5 ,width: 130}}><Button color= {this.state.professionalSize=='Individual'?'green':'grey'} title = 'Individual' onPress = {()=>{this.setState({professionalSize:'Individual'})}}/></View>
+                                <View style={{paddingLeft:5 ,width: 130}}><Button color={this.state.professionalSize=='Collective'?'green':'grey'} title = 'Collective' onPress = {()=>{this.setState({professionalSize:'Collective'})}}/></View>
+                                <View style={{paddingLeft:5 ,width: 130}}><Button color={this.state.professionalSize=='Organisation'?'green':'grey'} title = 'Organisation' onPress = {()=>{this.setState({professionalSize:'Organisation'})}}/></View>
+                            </View>
+                        </View>
+                        <View style={{paddingTop: 20}}>
+                            {this.chooseSkills}
+                        </View>
+
+                        <View style={{marginTop: 20}}>
+                            <Text style={{ fontSize: 18 }}> Write your country/location: </Text>
+                            <View style={{flexDirection: "row"}}>
+                                <View style={{paddingLeft:5, paddingTop:10 ,width: 130}}><Button color= {this.state.theNameOfUserLocation=='Georgia'?'green':'grey'} title = 'Georgia' onPress = {()=>{this.setState({theNameOfUserLocation:'Georgia'})}}/></View>
+                                <View style={{paddingLeft:5,paddingTop:10 ,width: 130}}><Button color={this.state.theNameOfUserLocation=='Belarus'?'green':'grey'} title = 'Belarus' onPress = {()=>{this.setState({theNameOfUserLocation:'Belarus'})}}/></View>
+                                <View style={{paddingLeft:5,paddingTop:10 ,width: 130}}><Button color={this.state.theNameOfUserLocation=='Lithuania'?'green':'grey'} title = 'Lithuania' onPress = {()=>{this.setState({theNameOfUserLocation:'Lithuania'})}}/></View>
+                            </View>
+                        </View>
+                        <View style={{marginTop: 20}}>
+                        <Text style={{ fontSize: 18 }} >Tell us about yourself </Text>
+                            <TextInput maxLength={40} placeholder="About you.. " onChangeText={(text)=>{this.setState({aboutUser:text})}}/>
+                        </View>
+                           <View style={{marginTop:30,width:250}}><Button style={{width:250}} color='grey' title ='Save info' onPress={()=>{this.pressButtonSaveInfo()}}/></View>
+                           <View style={{marginTop:20,width:250}}><Button style={{width:250}} color='grey' title ='Go back' onPress={()=>{this.goToStart()}}/></View>
                     </View>
-
-                    <View>
-                        {this.chooseSkills}
-                    </View>
-                    {this.developerSkillsChoise}
-                    <View>
-                        <Text> Write your country/location: </Text>
-
-                        <Picker
-                            selectedValue={this.state.theNameOfUserLocation}
-                            style={{ height: 50, width: 150 }}
-                            onValueChange={(itemValue, itemIndex) => this.setState({theNameOfUserLocation:itemValue})}
-                        >
-                            <Picker.Item label="Georgia" value="Georgia" />
-                            <Picker.Item label="Belarus" value="Belarus" />
-                            <Picker.Item label="Lithuania" value="Lithuania" />
-                        </Picker>
-
-                    </View>
-                    <View>
-                    <Text>Tell us about yourself </Text>
-                        <TextInput maxLength={40} placeholder="About you.. " onChangeText={(text)=>{this.setState({aboutUser:text})}}/>
-                    </View>
-
-                    <Button title ='Save info' onPress={()=>{this.pressButtonSaveInfo()}}/>
-                    <Button title ='Go back' onPress={()=>{this.goToStart()}}/>
-                </View>
-
-
                 )
      }
 
@@ -428,47 +420,30 @@ get chosenSkillsList(){
     }
 
     setRequirementSkillsOfProject(itemValue,itemIndex){
-    //эта функция добавляет выбранный скилл в массив умений девелопера
-    console.log(itemValue)
         let chose = this.state.requirementSkillsOfProject
         chose.push(itemValue)
         this.setState({requirementSkillsOfProject: chose})
     }
 
     get competitionFormScreen(){
-    //тут надо добавить возможность описания проекта, его названия, возможно добавления ссылок на файлы проекта(какие пользователи захотят, презентации там , всё такое )
         return (
-                <View style={{backgroundColor:'white',top:0}}>
-                    <TextInput placeholder="Enter Name of your project" onChangeText={(text)=>{this.setState({competitionProjectName:text})}}/>
-                    <TextInput maxLength={40} placeholder="Enter about your project " onChangeText={(text)=>{this.setState({competitionProjectDescription:text})}}/>
-
+                <View style={{borderRadius: 25, backgroundColor:'white',top:0, width:400, height:500, alignItems:'center'}}>
+                    <View style={{paddingTop: 30}}>
+                        <TextInput  style= {{borderRadius: 10, borderWidth:  1, borderColor: 'grey'}} placeholder="Enter Name of your project" onChangeText={(text)=>{this.setState({competitionProjectName:text})}}/>
+                        <TextInput style= {{borderRadius: 10, borderWidth:  1, borderColor: 'grey'}} maxLength={40} placeholder="Enter about your project " onChangeText={(text)=>{this.setState({competitionProjectDescription:text})}}/>
+                   </View>
                     <View>
                         {this.chooseSkillsForProject}
                     </View>
                         {this.requirementsSkillsForProject}
-                    <View>
-
-
+                    <View style={{paddingTop:100, width:250}}>
+                        <View style={{marginBottom: 20}}>
+                            <Button style={{width:250}} color = 'grey' title ='Go back' onPress={()=>{this.setState({openCompetitionForm:false})}}/>
+                        </View>
+                        <View>
+                            <Button  style={{width:250}} color = 'grey' title ='Send your idea' onPress={()=>{this.sendIdeaForCompetitionAnonSedByPlatform()}}/>
+                        </View>
                     </View>
-
-                    <Button title ='Go back' onPress={()=>{this.setState({openCompetitionForm:false})}}/>
-                    <Button title ='Send your idea' onPress={()=>{this.sendIdeaForCompetitionAnonSedByPlatform()}}/>
-                </View>
-        )
-    }
-
-    get chooseCinemaSkills(){
-        return(
-                <View>
-                    <Text>Indicate the skills:</Text>
-                    <Picker
-                        selectedValue={this.state.developerSkills}
-                        style={{ height: 50, width: 150 }}
-                        onValueChange={(itemValue, itemIndex) => this.setSelectedValuePickerDeveloper(itemValue,itemIndex)}
-                    >
-                        <Picker.Item label="single-camera setup" value="single-camera setup" />
-                        <Picker.Item label="multiple-camera setup" value="multiple-camera setup" />
-                    </Picker>
                 </View>
         )
     }
@@ -476,15 +451,12 @@ get chosenSkillsList(){
     get chooseTheatreSkills(){
         return(
             <View>
-                <Text>Indicate the skills:</Text>
-                <Picker
-                    selectedValue={this.state.developerSkills}
-                    style={{ height: 50, width: 150 }}
-                    onValueChange={(itemValue, itemIndex) => this.setSelectedValuePickerDeveloper(itemValue,itemIndex)}
-                >
-                     <Picker.Item label="Dansing" value="dansing" />
-                     <Picker.Item label="Singing" value="singing" />
-                </Picker>
+                <Text style={{fontSize:18}}>Indicate the skills:</Text>
+                <View style={{flexDirection: "row"}}>
+                    <View style={{paddingLeft: 5}}><Button color={this.state.developerSkills=='dansing'?'green':'grey'} title = 'Dansing' onPress = {()=>{this.setState({developerSkills:'dansing'})}}/></View>
+                    <View style={{paddingLeft: 5}}><Button color={this.state.developerSkills=='singing'?'green':'grey'} title = 'Singing' onPress = {()=>{this.setState({developerSkills:'singing'})}}/></View>
+                    <View style={{paddingLeft: 5}}><Button color={this.state.developerSkills=='juggling'?'green':'grey'} title = 'Juggling' onPress = {()=>{this.setState({developerSkills:'juggling'})}}/></View>
+                </View>
             </View>
         )
     }
@@ -494,7 +466,7 @@ get chosenSkillsList(){
     }
 
     get chooseSkills(){
-            return this.chooseTheatreSkills
+        return this.chooseTheatreSkills
     }
 
 
@@ -503,29 +475,21 @@ get chosenSkillsList(){
     }
 
     get chooseTheatreSkillsForProject(){
-                return(
+         return(
             <View>
-                <Text>Indicate the skills:</Text>
-                <Picker
-                    selectedValue={this.state.requirementSkillsOfProject}
-                    style={{ height: 50, width: 150 }}
-                    onValueChange={(itemValue, itemIndex) => this.setSelectedValuePickerSkillsForProject(itemValue,itemIndex)}
-                >
-                     <Picker.Item label="Dansing" value="dansing" />
-                     <Picker.Item label="Singing" value="singing" />
-                </Picker>
+                <Text style={{fontSize: 20}}>Indicate the skills:</Text>
+                <Button color={this.state.requirementSkillsOfProject=='dansing'?'green':'grey'} title = 'Dansing' onPress = {()=>{this.setState({requirementSkillsOfProject:'dansing'})}}/>
+                <Button color={this.state.requirementSkillsOfProject=='singing'?'green':'grey'} title = 'Singing' onPress = {()=>{this.setState({requirementSkillsOfProject:'singing'})}}/>
+                <Button color={this.state.requirementSkillsOfProject=='juggling'?'green':'grey'} title = 'Juggling' onPress = {()=>{this.setState({requirementSkillsOfProject:'juggling'})}}/>
             </View>
         )
     }
 
-        setSelectedValuePickerSkillsForProject(itemValue,itemIndex){
-    //эта функция добавляет выбранный скилл в массив умений девелопера
+    setSelectedValuePickerSkillsForProject(itemValue,itemIndex){
         let chose = this.state.requirementSkillsOfProject
-
         chose.push(itemValue)
         this.setState({requirementSkillsOfProject: chose})
     }
-
 
     get registeredOrLogged(){
         return (
@@ -535,17 +499,17 @@ get chosenSkillsList(){
                 <Text style={{fontSize: 35, color:'white'}}>Working in performing arts?</Text>
                 <Text style={{fontSize: 18, color:'white'}}>Welkome to the long awaited industry network</Text>
                 <View style={{marginTop:50}}>
-                <Button style={{backgroundColor: 'red' , color:'white ' }} title = 'Login' onPress = {()=>{this.setState({openSignUpScreen:false, openLoginScreen:true})}}/>
+                <Button color='grey' title = 'Login' onPress = {()=>{this.setState({openSignUpScreen:false, openLoginScreen:true})}}/>
                 </View>
                 <View style={{marginTop:20}}>
-                <Button style={{paddingTop:15  }} title = 'SignUp' onPress = {()=>{this.setState({openSignUpScreen:true, openLoginScreen:false})}}/>
+                <Button color='grey'  title = 'SignUp' onPress = {()=>{this.setState({openSignUpScreen:true, openLoginScreen:false})}}/>
                 </View>
             </View> : this.loginOrSignUpScreen
         )
     }
 
     setMatchingData(){
-         fetch('https://b0a815830980.ngrok.io/get_match', {
+         fetch('https://fbf3db53157e.ngrok.io/get_match', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -553,18 +517,14 @@ get chosenSkillsList(){
           },
           body: JSON.stringify({
             userId: this.state.userId,
-
           })
       }).then(function (response) { return response.json(); }).then((data) =>{
-
-      console.log('user data: '+data.result)
-      if(data.result){
-        this.setState({
-            carouselData:data.result,
-            currentCarouselItemId:data.result[0].id
-          })
-      }
-
+          if(data.result){
+            this.setState({
+                carouselData:data.result,
+                currentCarouselItemId:data.result[0].id
+              })
+          }
       }).catch(err => {
         console.log('ERROR here: ', err);
       });
@@ -572,9 +532,7 @@ get chosenSkillsList(){
 
 
     handleLoginSubmit(){
-        // тут отправка на бэк данных регистрации
-        console.log('here')
-      fetch('https://b0a815830980.ngrok.io/login', {
+      fetch('https://fbf3db53157e.ngrok.io/login', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -586,14 +544,12 @@ get chosenSkillsList(){
           })
       }).then(function (response) { return response.json(); }).then((data) =>{
         const userData = JSON.parse(data)
-      console.log('user data: '+JSON.parse(data).id)
-      this.setState({
-        openSignUpScreen:false,userLogged:true,newUser:false,
-        userName: userData.username, loginEmail: userData.email,
-        firstName:userData.firstname, lastName:userData.lastname,
-        aboutYou:userData.about_user, developerSkills: ['Dansing'], userId: userData.id
-
-      })
+          this.setState({
+            openSignUpScreen:false,userLogged:true,newUser:false,
+            userName: userData.username, loginEmail: userData.email,
+            firstName:userData.firstname, lastName:userData.lastname,
+            aboutYou:userData.about_user, developerSkills: ['Dansing'], userId: userData.id
+          })
       }).catch(err => {
         console.log('ERROR here: ', err);
       });
@@ -602,8 +558,7 @@ get chosenSkillsList(){
 
     handleRegisterSubmit(){
     let userId =''
-        // тут отправка на бэк данных регистрации
-      fetch('https://b0a815830980.ngrok.io/register', {
+      fetch('https://fbf3db53157e.ngrok.io/register', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -618,20 +573,15 @@ get chosenSkillsList(){
             userId: this.state.userId
           })
       }).then(function (response) { return response.json(); }).then((data) =>{
-        console.log(data.userId)
-        this.setState({userId:data.userId,openSignUpScreen:false,userLogged:true,newUser:false})
-
+        this.setState({userId:data.userId,openSignUpScreen:false,userLogged:true,newUser:true})
       }).catch(err => {
-
         console.log('ERROR here: ', err);
       });
 
     }
 
     handleUpdateUser(){
-    let userId =''
-        // тут отправка на бэк данных регистрации
-      fetch('https://b0a815830980.ngrok.io/update_user', {
+      fetch('https://fbf3db53157e.ngrok.io/update_user', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -647,7 +597,6 @@ get chosenSkillsList(){
           })
       }).then(function (response) { return response.json(); }).then((data) =>{
       }).catch(err => {
-
         console.log('ERROR here: ', err);
       });
 
@@ -655,9 +604,7 @@ get chosenSkillsList(){
 
 
     handleCreateProject(){
-    let userId =''
-        // тут отправка на бэк данных регистрации
-      fetch('https://b0a815830980.ngrok.io/create_project', {
+      fetch('https://fbf3db53157e.ngrok.io/create_project', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -670,18 +617,14 @@ get chosenSkillsList(){
             who_create: this.state.userId
           })
       }).then(function (response) { return response.json(); }).then((data) =>{
-        console.log(data)
-
-
       }).catch(err => {
 
         console.log('ERROR here: ', err);
       });
-
     }
 
     setLikeToBackend(){
-         fetch('https://b0a815830980.ngrok.io/set_like', {
+         fetch('https://fbf3db53157e.ngrok.io/set_like', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -692,19 +635,14 @@ get chosenSkillsList(){
             likeTo: this.state.currentCarouselItemId
           })
       }).then(function (response) { return response.json(); }).then((data) =>{
-        console.log(data)
-
-
       }).catch(err => {
-
         console.log('ERROR here: ', err);
       });
-
     }
 
 
     getItemsForNotifications(){
-       fetch('https://b0a815830980.ngrok.io/get_notifications', {
+       fetch('https://fbf3db53157e.ngrok.io/get_notifications', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -714,17 +652,14 @@ get chosenSkillsList(){
             notificationsFromUserId: this.state.userId,
           })
       }).then(function (response) { return response.json(); }).then((data) =>{
-        console.log(data)
         this.setState({notificationItems:data,openNotificationsList:true})
-
       }).catch(err => {
-
         console.log('ERROR here: ', err);
       });
     }
 
     getMessages(){
-         fetch('https://b0a815830980.ngrok.io/get_messages', {
+         fetch('https://fbf3db53157e.ngrok.io/get_messages', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -734,17 +669,14 @@ get chosenSkillsList(){
             messagesForUser: this.state.userId,
           })
       }).then(function (response) { return response.json(); }).then((data) =>{
-        console.log(data)
         this.setState({listMessages:data,openMessagesForm:true})
-
       }).catch(err => {
-
         console.log('ERROR here: ', err);
       });
     }
 
     getTargetUsers(){
-         fetch('https://b0a815830980.ngrok.io/get_target_users', {
+         fetch('https://fbf3db53157e.ngrok.io/get_target_users', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -754,18 +686,14 @@ get chosenSkillsList(){
             messagesForUser: this.state.userId,
           })
       }).then(function (response) { return response.json(); }).then((data) =>{
-        console.log(data)
-
         this.setState({listUsersToWhoCanWriteMessage:data})
-
       }).catch(err => {
-
         console.log('ERROR here: ', err);
       });
     }
 
     sendMessage(){
-        fetch('https://b0a815830980.ngrok.io/send_message', {
+        fetch('https://fbf3db53157e.ngrok.io/send_message', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -777,25 +705,21 @@ get chosenSkillsList(){
             textLetter: this.state.textLetter
           })
       }).then(function (response) { return response.json(); }).then((data) =>{
-        console.log(data)
-
         this.setState({openUserInfoPage:false, userInSearch:false, openNotificationsList:false, createLetter:false, openMessagesForm:false})
-
       }).catch(err => {
-
         console.log('ERROR here: ', err);
       });
     }
 
     get signUpScreen(){
         return (
-            <View style={{backgroundColor:'white'}}>
-                <TextInput onChangeText={(text)=>{this.setState({userName:text})}} placeholder="Username" />
-                <TextInput onChangeText={(text)=>{this.setState({firstName:text})}} placeholder="FirstName"/>
-                <TextInput onChangeText={(text)=>{this.setState({lastName:text})}} placeholder="LastName"/>
-                <TextInput placeholder="Enter Email" onChangeText={(text)=>{this.setState({loginEmail:text})}}/>
-                <TextInput onChangeText={(text)=>{this.setState({loginPswd:text})}} secureTextEntry={true} placeholder="Enter Password"/>
-                <Button title = 'Submit' onPress = {()=>{this.handleRegisterSubmit()}}/>
+            <View style={{width: 400, height:500,borderRadius: 25,backgroundColor:'white', alignItems:'center'}}>
+                <TextInput style= {{ height: 40, width:350, marginTop:90, marginBottom:20,borderRadius: 10, borderWidth:  1, borderColor: 'grey'}} onChangeText={(text)=>{this.setState({userName:text})}} placeholder="Username" />
+                <TextInput style= {{ height: 40,width:350,marginBottom:10, borderRadius: 10, borderWidth:  1, borderColor: 'grey'}} onChangeText={(text)=>{this.setState({firstName:text})}} placeholder="FirstName"/>
+                <TextInput style= {{height: 40,width:350,marginBottom:10, borderRadius: 10, borderWidth:  1, borderColor: 'grey'}} onChangeText={(text)=>{this.setState({lastName:text})}} placeholder="LastName"/>
+                <TextInput style= {{height: 40,width:350,marginBottom:10, borderRadius: 10, borderWidth:  1, borderColor: 'grey'}} placeholder="Enter Email" onChangeText={(text)=>{this.setState({loginEmail:text})}}/>
+                <TextInput style= {{height: 40,width:350, marginBottom:10,borderRadius: 10, borderWidth:  1, borderColor: 'grey'}} onChangeText={(text)=>{this.setState({loginPswd:text})}} secureTextEntry={true} placeholder="Enter Password"/>
+                <View style={{width:300}}><Button color='grey' style= {{ width:250, borderRadius: 10, borderWidth:  1, borderColor: 'grey'}} title = 'Submit' onPress = {()=>{this.handleRegisterSubmit()}}/></View>
             </View>
         )
     }
@@ -810,19 +734,19 @@ get chosenSkillsList(){
     }
 
     get loginScreen(){
-    // экран логина
         return (
-           <View style={{backgroundColor: 'white' , height:400, width:320, }}>
+           <View style={{borderRadius: 25,backgroundColor: 'white' , height:400, width:320, alignItems:'center' }}>
            <View style={{marginTop:100}}>
-            <TextInput placeholder="Email" onChangeText={(text)=>{this.setState({loginEmail:text})}}/>
-            <TextInput
+            <TextInput style= {{borderRadius: 10, borderWidth:  1, borderColor: 'grey'}} placeholder="Email" onChangeText={(text)=>{this.setState({loginEmail:text})}}/>
+            <View style={{marginTop: 30}}><TextInput
+            style= {{borderRadius: 10, borderWidth:  1, borderColor: 'grey'}}
             onChangeText={(text)=>{this.setState({loginPswd:text})}}
               secureTextEntry={true}
               placeholder="Enter Password"
-            />
+            /></View>
             </View>
-            <View style={{paddingTop: 150, width:200}}>
-                <Button style={{backgroundColor: 'white'}} title = 'Login' onPress = {()=>{this.handleLoginSubmit()}}/>
+            <View style={{paddingTop: 100, width:300}}>
+                <Button color = 'grey' title = 'Login' onPress = {()=>{this.handleLoginSubmit()}}/>
             </View>
           </View>
 
@@ -839,17 +763,13 @@ get chosenSkillsList(){
         return (
         <View>
             {this.carousel}
-            <View style={{padding:20}}><Button title ='Go to accaunt' onPress={()=>{this.goToUserAccount()}}/></View>
-            <Button title ='Go back' onPress={()=>{this.pressButtonHandle(false)}}/>
         </View>);
     }
 
     get createUpdateScreen(){
     // экран выбора статуса , кем юзер хочет быть
         return (
-                <View style={{flex:1,alignItems: 'center', justifyContent: 'center',backgroundColor:'white', width:600}}>
-                    <TouchableOpacity onPress={()=>{this.setState({statusChoise:'team'})}}><View><Text>Team</Text></View></TouchableOpacity>
-                    <TouchableOpacity onPress={()=>{this.setState({statusChoise:'specialist'})}}><View><Text>Artist</Text></View></TouchableOpacity>
+                <View style={{marginTop: -200,flex:1,alignItems: 'center', justifyContent: 'center',backgroundColor:'white', height:500}}>
                      {this.profileMenu}
                 </View>
                 )

@@ -19,7 +19,7 @@ const CarouselCards = (props) => {
         itemWidth={ITEM_WIDTH}
         inactiveSlideShift={0}
         useScrollView={true}
-        onSnapToItem={(index)=>{props.currentCarouselItem(index)}}
+        onSnapToItem={(index)=>{props.currentCarouselItem(props.carouselData[index])}}
       />
     </View>
   )

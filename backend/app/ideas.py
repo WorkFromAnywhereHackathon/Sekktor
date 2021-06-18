@@ -29,3 +29,16 @@ def add_project(name, description, need_skills, who_create):
     session.add(Ideas(name=name, description=description, need_skills=need_skills, who_create=who_create))
     session.commit()
 
+def searchProjects(targetSkills):
+    result = session.query(Ideas).filter(Ideas.need_skills == targetSkills).all()
+    print('targetSkills: '+targetSkills)
+    projects = []
+    for res in result:
+        projects.append({'id':res.id, 'name':res.name,'description':res.description, 'need_skills':res.need_skills, 'photo_project': 'https://picsum.photos/id/10/200/300'})
+    return projects
+
+
+def get_idea_by_id(ideaId):
+    result = session.query(Ideas).filter(Ideas.id == ideaId).all()
+    for res in result:
+        return json.dumps({'id':res.id,'who_create':res.who_create, 'name': res.name})

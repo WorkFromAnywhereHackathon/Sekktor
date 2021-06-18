@@ -46,14 +46,16 @@ class App extends Component {
 state={
 carouselData:[],
 userId:'',
+listUsersToWhoCanWriteMessage:[],
 skillsForProject:[],
+listMessages:[],
     requirementSkillsOfProject:[],
     thisUserCanSeeChannels:true,
     currentCarouselItemId:'',
     openCompetitionForm:false,
     developerSkills:[],
    statusChoise:false,
-
+    notificationItems:[],
     professionalSize:'',
     openLoginScreen:false,
     userLogged:false,
@@ -152,17 +154,11 @@ skillsForProject:[],
 
     currentCarouselItem=(currentItemId)=>{
     // эта функция служит для того что бы прокидываться в карусель и давать оттуда айдишник
-        this.setState({currentCarouselItemId:currentItemId})
-        console.log('in app: '+currentItemId)
+        this.setState({currentCarouselItemId:currentItemId.id})
     }
 
-    setLike(id){
-        if(id==null){
-            console.log(this.state.currentCarouselItemId)
-        }else{
-            console.log(id)
-        }
-        //ставим лайк. записываем что нам кто-то понравился(его айдишник)
+    setLike(){
+        this.setLikeToBackend()
     }
 
     get carousel(){
@@ -176,43 +172,77 @@ skillsForProject:[],
       );
     }
 
+    get notifications(){
+    let result = []
+    let i = 0
+         for(const item in this.state.notificationItems){
+            result.push(<Text key={i}>User {this.state.notificationItems[item].username_who_like} is interested in your project
+             {this.state.notificationItems[item].idea_name} </Text>)
+             i++
+         }
+        return result
+    }
+
     get notificationsListForm(){
         return(
-            <View>
-                <Text> Notifications  list must be here here </Text>
-                <Button title ='Go back to account' onPress={()=>{this.setState({openUserInfoPage:false, userInSearch:false, openNotificationsList:false})}}/>
+            <View style={{backgroundColor:'white'}}>
+
+                        {this.notifications}
+
+                <Button title ='Go back to account' onPress={()=>{this.setState({openUserInfoPage:false, userInSearch:false,
+                    openNotificationsList:false})}}/>
             </View>
         )
     }
 
-    get messagesListForm(){
+    getTargetUsersForMessages(){
+        this.getTargetUsers()
+        this.setState({createLetter:true})
+    }
+
+    get userSelectForSendMessage(){
+
         return(
-            !this.state.createLetter ?
-            <View>
-                <Text> Messages  list must be here here </Text>
-                <Button title ='Wanna create message? ' onPress={()=>{this.setState({createLetter:true})}}/>
-                <Button title ='Go back to account' onPress={()=>{this.setState({openUserInfoPage:false, userInSearch:false, openNotificationsList:false, createLetter:false, openMessagesForm:false})}}/>
-            </View> :
-            <View>
-                <Text> Create message here </Text>
-                <TextInput placeholder="Enter text message here" onChangeText={(text)=>{this.setState({textLetter:text})}}/>
-                 <View style={{height:150}}>
+                 <View style={{backgroundColor:'white',height:150}}>
                       <FlatList
-                        data={[
-                          {title: 'Devin', id:1},
-                          {title: 'Dan',id:2},
-                        ]}
+                        data={this.state.listUsersToWhoCanWriteMessage}
                         renderItem={({item}) =>
-                        <TouchableWithoutFeedback onPress={ () => this.pageOfUser(item.id)}>
-                              <View>
-                                 <Text> {item.title} <Button title ='Select this user' onPress={()=>{this.setState({forWhoThisLetter:item.id})}}/></Text>
+                        <TouchableWithoutFeedback  onPress={ () => this.pageOfUser(item.user_id_who_like)}>
+                              <View >
+                                 <Text key={item.user_id_who_like} > {item.username_who_like} <Button title ='Select this user' onPress={()=>{this.setState({forWhoThisLetter:item.user_id_who_like})}}/></Text>
                               </View>
                         </TouchableWithoutFeedback>
                         }
                       />
                  </View>
+        )
+    }
 
-                <Button title ='Send Message' onPress={()=>{console.log('message was send')}}/>
+    get messageLIstForm(){
+        let result = []
+        let i = 0
+         for(const item in this.state.listMessages){
+            result.push(<Text key={i}>User {this.state.listMessages[item].username_who_send_message} says you:  {this.state.listMessages[item].text_message} </Text>)
+             i++
+         }
+        return result
+    }
+    
+    get messagesListForm(){
+        return(
+            !this.state.createLetter ?
+            <View style={{backgroundColor:'white'}}>
+                {this.messageLIstForm}
+
+                <Button title ='Wanna create message? ' onPress={()=>{this.getTargetUsersForMessages()}}/>
+                <Button title ='Go back to account' onPress={()=>{this.setState({openUserInfoPage:false, userInSearch:false, openNotificationsList:false, createLetter:false, openMessagesForm:false})}}/>
+            </View> :
+            <View style={{backgroundColor:'white'}}>
+                <Text> Create message here </Text>
+                <TextInput placeholder="Enter text message here" onChangeText={(text)=>{this.setState({textLetter:text})}}/>
+                   {this.userSelectForSendMessage}
+
+                <Button title ='Send Message' onPress={()=>{this.sendMessage()}}/>
                 <Button title ='Go back to message list' onPress={()=>{this.setState({openUserInfoPage:false, userInSearch:false, openNotificationsList:false, createLetter:false})}}/>
                 <Button title ='Go back to account' onPress={()=>{this.setState({openUserInfoPage:false, userInSearch:false, openNotificationsList:false, createLetter:false, openMessagesForm:false})}}/>
             </View>
@@ -260,10 +290,20 @@ get chosenSkillsList(){
                         <Button title ='Create idea' onPress={()=>{this.setState({openCompetitionForm:true})}}/>
                         <Button title ='Go to search' onPress={()=>{this.pressGoToSearchButton()}}/>
                         <Button title ='Update Profile' onPress={()=>{this.pressButtonHandle(false)}}/>
-                        <Button title ='Your Notifications (2)' onPress={()=>{this.setState({openNotificationsList:true})}}/>
-                        <Button title ='Your messages list (1)' onPress={()=>{this.setState({openMessagesForm:true})}}/>
+                        <Button title ='Your Notifications (2)' onPress={()=>{this.openNotifications()}}/>
+                        <Button title ='Your messages list (1)' onPress={()=>{this.openMessages()}}/>
                     </View>
                 </View>)
+    }
+
+    openNotifications(){
+        this.getItemsForNotifications()
+        this.setState({openNotificationsList:true})
+    }
+
+    openMessages(){
+        this.getMessages()
+        this.setState({openMessagesForm:true})
     }
 
 
@@ -312,7 +352,7 @@ get chosenSkillsList(){
 
     handleDeleteRequirementSkill(currentSkillName){
         let chooses = this.state.developerSkills
-        chooses.splice(chooses.indexOf(choseName), 1);
+        chooses.splice(chooses.indexOf(currentSkillName), 1);
         this.setState({developerSkills:chooses})
     }
         get requirementsSkillsForProject(){
@@ -505,7 +545,7 @@ get chosenSkillsList(){
     }
 
     setMatchingData(){
-              fetch('https://67d89896745c.ngrok.io/get_match', {
+         fetch('https://b0a815830980.ngrok.io/get_match', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -517,14 +557,14 @@ get chosenSkillsList(){
           })
       }).then(function (response) { return response.json(); }).then((data) =>{
 
-      console.log('user data: '+data[0].test)
-//      this.setState({
-//        carouselData:false,userLogged:true,newUser:false,
-//        userName: userData.username, loginEmail: userData.email,
-//        firstName:userData.firstname, lastName:userData.lastname,
-//        aboutYou:userData.about_user, developerSkills: ['Dansing']
-//
-//      })
+      console.log('user data: '+data.result)
+      if(data.result){
+        this.setState({
+            carouselData:data.result,
+            currentCarouselItemId:data.result[0].id
+          })
+      }
+
       }).catch(err => {
         console.log('ERROR here: ', err);
       });
@@ -534,7 +574,7 @@ get chosenSkillsList(){
     handleLoginSubmit(){
         // тут отправка на бэк данных регистрации
         console.log('here')
-      fetch('https://67d89896745c.ngrok.io/login', {
+      fetch('https://b0a815830980.ngrok.io/login', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -558,15 +598,12 @@ get chosenSkillsList(){
         console.log('ERROR here: ', err);
       });
       //засэтить данные нормально , после сохранения
-
-//        let userInfo = {newUser:true, userLogged:true, userId:'', userName:'', userRole:'', aboutYou:'', userSkills:{}}
-//        this.setState({userInfo:userInfo, openSignUpScreen:false,userLogged:true,newUser:true})
     }
 
     handleRegisterSubmit(){
     let userId =''
         // тут отправка на бэк данных регистрации
-      fetch('https://67d89896745c.ngrok.io/register', {
+      fetch('https://b0a815830980.ngrok.io/register', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -594,7 +631,7 @@ get chosenSkillsList(){
     handleUpdateUser(){
     let userId =''
         // тут отправка на бэк данных регистрации
-      fetch('https://67d89896745c.ngrok.io/update_user', {
+      fetch('https://b0a815830980.ngrok.io/update_user', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -609,9 +646,6 @@ get chosenSkillsList(){
             userId: this.state.userId
           })
       }).then(function (response) { return response.json(); }).then((data) =>{
-        console.log(data.userId)
-
-
       }).catch(err => {
 
         console.log('ERROR here: ', err);
@@ -623,7 +657,7 @@ get chosenSkillsList(){
     handleCreateProject(){
     let userId =''
         // тут отправка на бэк данных регистрации
-      fetch('https://67d89896745c.ngrok.io/create_project', {
+      fetch('https://b0a815830980.ngrok.io/create_project', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -646,6 +680,112 @@ get chosenSkillsList(){
 
     }
 
+    setLikeToBackend(){
+         fetch('https://b0a815830980.ngrok.io/set_like', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            likeFrom: this.state.userId,
+            likeTo: this.state.currentCarouselItemId
+          })
+      }).then(function (response) { return response.json(); }).then((data) =>{
+        console.log(data)
+
+
+      }).catch(err => {
+
+        console.log('ERROR here: ', err);
+      });
+
+    }
+
+
+    getItemsForNotifications(){
+       fetch('https://b0a815830980.ngrok.io/get_notifications', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            notificationsFromUserId: this.state.userId,
+          })
+      }).then(function (response) { return response.json(); }).then((data) =>{
+        console.log(data)
+        this.setState({notificationItems:data,openNotificationsList:true})
+
+      }).catch(err => {
+
+        console.log('ERROR here: ', err);
+      });
+    }
+
+    getMessages(){
+         fetch('https://b0a815830980.ngrok.io/get_messages', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            messagesForUser: this.state.userId,
+          })
+      }).then(function (response) { return response.json(); }).then((data) =>{
+        console.log(data)
+        this.setState({listMessages:data,openMessagesForm:true})
+
+      }).catch(err => {
+
+        console.log('ERROR here: ', err);
+      });
+    }
+
+    getTargetUsers(){
+         fetch('https://b0a815830980.ngrok.io/get_target_users', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            messagesForUser: this.state.userId,
+          })
+      }).then(function (response) { return response.json(); }).then((data) =>{
+        console.log(data)
+
+        this.setState({listUsersToWhoCanWriteMessage:data})
+
+      }).catch(err => {
+
+        console.log('ERROR here: ', err);
+      });
+    }
+
+    sendMessage(){
+        fetch('https://b0a815830980.ngrok.io/send_message', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+          whoSend: this.state.userId,
+            sendForUser: this.state.forWhoThisLetter,
+            textLetter: this.state.textLetter
+          })
+      }).then(function (response) { return response.json(); }).then((data) =>{
+        console.log(data)
+
+        this.setState({openUserInfoPage:false, userInSearch:false, openNotificationsList:false, createLetter:false, openMessagesForm:false})
+
+      }).catch(err => {
+
+        console.log('ERROR here: ', err);
+      });
+    }
 
     get signUpScreen(){
         return (

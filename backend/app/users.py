@@ -48,7 +48,7 @@ def add_user(username, password, email,firstname,lastname,about_user,user_status
 def get_user(email,pswd):
     result = session.query(Users).filter(Users.email == email, Users.password == pswd).all()
     for res in result:
-        return json.dumps({'id':res.id, 'username':res.username, 'password':res.password, 'email': res.email, 'firstname':res.firstname, 'lastname':res.lastname, 'about_user':res.about_user, 'user_status':res.user_status,'country':res.country,'photo_url':res.photo_url})
+        return json.dumps({'id':res.id, 'username':res.username, 'password':res.password, 'email': res.email, 'firstname':res.firstname, 'lastname':res.lastname, 'about_user':res.about_user, 'user_status':res.user_status,'country':res.country,'photo_url':res.photo_url,'user_skills':res.user_skills})
 
 def update_user(aboutUser, user_status, country,userSkills,userId):
     data_to_update = {Users.about_user: aboutUser, Users.user_status: user_status, Users.country: country, Users.user_skills: userSkills}
@@ -57,7 +57,7 @@ def update_user(aboutUser, user_status, country,userSkills,userId):
     session.commit()
 
 
-def get_user_by_id(id):
-    user = session.query(User).filter(User.id == email, User.password == pswd)
-    print(user)
-    return user
+def get_user_by_id(userId):
+    result = session.query(Users).filter(Users.id == userId).all()
+    for res in result:
+        return json.dumps({'id':res.id, 'username':res.username, 'password':res.password, 'email': res.email, 'firstname':res.firstname, 'lastname':res.lastname, 'about_user':res.about_user, 'user_status':res.user_status,'country':res.country,'photo_url':res.photo_url, 'user_skills':res.user_skills})

@@ -50,7 +50,7 @@ userId:'',
 listUsersToWhoCanWriteMessage:[],
 skillsForProject:[],
 listMessages:[],
-    requirementSkillsOfProject:[],
+    requirementSkillsOfProject:'',
     thisUserCanSeeChannels:true,
     currentCarouselItemId:'',
     openCompetitionForm:false,
@@ -148,6 +148,7 @@ listMessages:[],
         this.setState({currentCarouselItemId:currentItemId.id})
     }
 
+
     setLike(){
         this.setLikeToBackend()
     }
@@ -157,7 +158,7 @@ listMessages:[],
 
                 <SafeAreaView >
                   <CarouselCards carouselData={this.state.carouselData} currentCarouselItem={this.currentCarouselItem}/>
-                  <View style={{marginTop:20,}} ><Button  color='grey' title ='Go back' onPress={()=>{this.pressButtonHandle(false)}}/></View>
+
                   <View style={{marginTop:20}}><Button color='grey' title ='Go to accaunt' onPress={()=>{this.goToUserAccount()}}/></View>
                   <View style={{marginTop:20}}><Button color='grey' title ='Like It' onPress={()=>{this.setLike()}}/></View>
                 </SafeAreaView>
@@ -366,16 +367,8 @@ get skillOfUser(){
     }
         get requirementsSkillsForProject(){
         //отрисовывает скилы девелопера с возможностью их удаления
-        let result = []
-            for(const chose in this.state.requirementSkillsOfProject){
-                let currentSkillName = this.state.requirementSkillsOfProject[chose]
-               result.push(
-                           <Text key={chose}>{this.state.requirementSkillsOfProject[chose]}
-                             <Button title ='x' onPress={()=>{this.handleDeleteRequirementSkill(currentSkillName)}}/>
-                           </Text>
-                          )
-            }
-        return result
+
+         return (this.state.requirementSkillsOfProject ? <Text style={{fontSize: 16, paddingBottom: 15}} >User skill: {this.state.requirementSkillsOfProject}</Text>:null)
     }
 
     setProfessionalSize(itemValue){
@@ -410,7 +403,7 @@ get skillOfUser(){
                             <TextInput maxLength={40} placeholder="About you.. " onChangeText={(text)=>{this.setState({aboutUser:text})}}/>
                         </View>
                            <View style={{marginTop:30,width:250}}><Button style={{width:250}} color='grey' title ='Save info' onPress={()=>{this.pressButtonSaveInfo()}}/></View>
-                           <View style={{marginTop:20,width:250}}><Button style={{width:250}} color='grey' title ='Go back' onPress={()=>{this.goToStart()}}/></View>
+
                     </View>
                 )
      }
@@ -427,7 +420,7 @@ get skillOfUser(){
 
     get competitionFormScreen(){
         return (
-                <View style={{borderRadius: 25, backgroundColor:'white',top:0, width:400, height:500, alignItems:'center'}}>
+                <View style={{marginTop:100, borderRadius: 25, backgroundColor:'white',top:0, width:400, height:500, alignItems:'center'}}>
                     <View style={{paddingTop: 30}}>
                         <TextInput  style= {{borderRadius: 10, borderWidth:  1, borderColor: 'grey'}} placeholder="Enter Name of your project" onChangeText={(text)=>{this.setState({competitionProjectName:text})}}/>
                         <TextInput style= {{borderRadius: 10, borderWidth:  1, borderColor: 'grey'}} maxLength={40} placeholder="Enter about your project " onChangeText={(text)=>{this.setState({competitionProjectDescription:text})}}/>
@@ -635,6 +628,9 @@ get skillOfUser(){
             likeTo: this.state.currentCarouselItemId
           })
       }).then(function (response) { return response.json(); }).then((data) =>{
+              return Alert.alert(
+         'Your reaction was send!'
+      )
       }).catch(err => {
         console.log('ERROR here: ', err);
       });
@@ -720,6 +716,9 @@ get skillOfUser(){
                 <TextInput style= {{height: 40,width:350,marginBottom:10, borderRadius: 10, borderWidth:  1, borderColor: 'grey'}} placeholder="Enter Email" onChangeText={(text)=>{this.setState({loginEmail:text})}}/>
                 <TextInput style= {{height: 40,width:350, marginBottom:10,borderRadius: 10, borderWidth:  1, borderColor: 'grey'}} onChangeText={(text)=>{this.setState({loginPswd:text})}} secureTextEntry={true} placeholder="Enter Password"/>
                 <View style={{width:300}}><Button color='grey' style= {{ width:250, borderRadius: 10, borderWidth:  1, borderColor: 'grey'}} title = 'Submit' onPress = {()=>{this.handleRegisterSubmit()}}/></View>
+                <View style={{paddingTop: 10, width:300}}>
+                    <Button color = 'grey' title = 'Back' onPress = {()=>{this.setState({openSignUpScreen:false,openLoginScreen:false})}}/>
+                </View>
             </View>
         )
     }
@@ -745,8 +744,11 @@ get skillOfUser(){
               placeholder="Enter Password"
             /></View>
             </View>
-            <View style={{paddingTop: 100, width:300}}>
+            <View style={{paddingTop: 80, width:300}}>
                 <Button color = 'grey' title = 'Login' onPress = {()=>{this.handleLoginSubmit()}}/>
+            </View>
+            <View style={{paddingTop: 10, width:300}}>
+                <Button color = 'grey' title = 'Back' onPress = {()=>{this.setState({openSignUpScreen:false,openLoginScreen:false})}}/>
             </View>
           </View>
 
